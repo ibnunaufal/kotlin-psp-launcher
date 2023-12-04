@@ -17,4 +17,12 @@ class AuthRepository @Inject constructor (
     },
         userPreferences
     )
+
+    suspend fun checkUpdate(
+        id: String
+    ) = safeApiCall({
+        api.checkUpdate(id)
+    },
+        userPreferences
+    )
 }

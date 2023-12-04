@@ -9,6 +9,7 @@ import id.co.psplauncher.data.local.UserPreferences
 import id.co.psplauncher.data.network.Resource
 import id.co.psplauncher.data.network.auth.AuthRepository
 import id.co.psplauncher.data.network.response.LoginResponse
+import id.co.psplauncher.data.network.response.UpdateResponse
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,4 +27,10 @@ class MainViewModel @Inject constructor(
         _loginResponse.value = authRepository.login(username, password)
     }
 
+    private var _updateResponse: MutableLiveData<Resource<UpdateResponse>> = MutableLiveData()
+    val updateResponse: LiveData<Resource<UpdateResponse>> get() = _updateResponse
+    fun checkUpdate(id: String) = viewModelScope.launch {
+        _updateResponse.value = Resource.Loading
+        _updateResponse.value = authRepository.checkUpdate(id)
+    }
 }
