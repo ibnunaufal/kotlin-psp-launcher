@@ -2,6 +2,7 @@ package id.co.psplauncher.data.network.auth
 
 import id.co.psplauncher.data.network.model.ModelLogin
 import id.co.psplauncher.data.network.response.LoginResponse
+import id.co.psplauncher.data.network.response.PackageListResponse
 import id.co.psplauncher.data.network.response.UpdateResponse
 import retrofit2.Response
 import retrofit2.http.Body
@@ -22,4 +23,7 @@ interface AuthApi {
     suspend fun checkUpdate(
         @Path("id") id: String
     ): Response<UpdateResponse>
+
+    @GET("main_a/general/package_app")
+    suspend fun getPackageApp(): Response<PackageListResponse>
 }

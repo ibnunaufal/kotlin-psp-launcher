@@ -25,4 +25,10 @@ class AuthRepository @Inject constructor (
     },
         userPreferences
     )
+
+    suspend fun getPackageApp() = safeApiCall({
+        api.getPackageApp()
+    },
+        userPreferences
+    )
 }

@@ -9,6 +9,7 @@ import id.co.psplauncher.data.local.UserPreferences
 import id.co.psplauncher.data.network.Resource
 import id.co.psplauncher.data.network.auth.AuthRepository
 import id.co.psplauncher.data.network.response.LoginResponse
+import id.co.psplauncher.data.network.response.PackageListResponse
 import id.co.psplauncher.data.network.response.UpdateResponse
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -32,5 +33,12 @@ class MainViewModel @Inject constructor(
     fun checkUpdate(id: String) = viewModelScope.launch {
         _updateResponse.value = Resource.Loading
         _updateResponse.value = authRepository.checkUpdate(id)
+    }
+
+    private var _packageAppResponse: MutableLiveData<Resource<PackageListResponse>> = MutableLiveData()
+    val packageAppResponse: LiveData<Resource<PackageListResponse>> get() = _packageAppResponse
+    fun getPackageApp() = viewModelScope.launch {
+        _packageAppResponse.value = Resource.Loading
+        _packageAppResponse.value = authRepository.getPackageApp()
     }
 }

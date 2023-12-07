@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity() {
     var apkUrl = "https://github.com/ibnunaufal/stb-launcher/raw/master/psp-launcher.apk"
     var inputtedApkUrl = ""
     var wifiJob: Job? = null
+    private var activePackageList = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,6 +64,16 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             else if (it is Resource.Failure){
+            }
+        }
+
+        viewModel.packageAppResponse.observe(this){
+            if (it is Resource.Success){
+                Log.d("packageAppResponse", it.value.toString())
+                it.value.forEach { item ->
+                    activePackageList.add(item.name)
+                }
+                showAll()
             }
         }
     }
@@ -118,6 +129,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         checkUpdate()
+        getPackageList()
     }
 
     override fun onBackPressed() {
@@ -169,5 +181,9 @@ class MainActivity : AppCompatActivity() {
         } else {
             // Handle the case when the device's Android version is below O
         }
+    }
+
+    fun getPackageList(){
+        viewModel.getPackageApp()
     }
 }
