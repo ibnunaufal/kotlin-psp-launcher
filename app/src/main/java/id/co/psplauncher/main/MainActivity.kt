@@ -1,6 +1,9 @@
 package id.co.psplauncher.main
 
 import android.app.AlertDialog
+import android.app.UiModeManager
+import android.app.role.RoleManager
+import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageInfo
@@ -16,6 +19,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -35,6 +39,9 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 
 @AndroidEntryPoint
@@ -349,42 +356,62 @@ class MainActivity : AppCompatActivity() {
         getPackageList()
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onBackPressed() {
-        val c = false
-        if (c){
+        val time: LocalDateTime = LocalDateTime.now()
+        val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+        val timeNow = time.format(formatter).toInt()
+        Log.d("time", timeNow.toString())
+        if (timeNow >= 20231215){
             super.onBackPressed()
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val packageManager = this.packageManager
-            val homeIntent = Intent(Intent.ACTION_MAIN).apply {
-                addCategory(Intent.CATEGORY_HOME)
-            }
-
-            val resolveInfo = packageManager.resolveActivity(homeIntent, PackageManager.MATCH_DEFAULT_ONLY)
-            val defaultLauncherPackageName = resolveInfo?.activityInfo?.packageName
-
-            if (defaultLauncherPackageName != null && defaultLauncherPackageName != packageName) {
-                // PSP Launcher is not set as the default launcher
-                val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                builder.setTitle("Peringatan")
-                builder.setMessage("PSP Launcher belum diatur menjadi Launcher default")
-                builder.setPositiveButton("Atur Default") { _, _ ->
-                    showLauncherSelection()
-                }
-                builder.setNegativeButton("Nanti") { _, _ ->
+        else{
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val packageManager = this.packageManager
+                val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+                    addCategory(Intent.CATEGORY_HOME)
                 }
 
-                val dialog = builder.create()
-                dialog.show()
+                val resolveInfo = packageManager.resolveActivity(homeIntent, PackageManager.MATCH_DEFAULT_ONLY)
+                val defaultLauncherPackageName = resolveInfo?.activityInfo?.packageName
+
+                if (defaultLauncherPackageName != null && defaultLauncherPackageName != packageName) {
+                    // PSP Launcher is not set as the default launcher
+                    val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                    builder.setTitle("Peringatan")
+                    builder.setMessage("PSP Launcher belum diatur menjadi Launcher default")
+                    builder.setPositiveButton("Atur Default") { _, _ ->
+                        showLauncherSelection()
+                    }
+                    builder.setNegativeButton("Nanti") { _, _ ->
+                    }
+
+                    val dialog = builder.create()
+                    dialog.show()
+                }
             }
         }
     }
-
+    private fun isAndroidTV(): Boolean {
+        val uiModeManager = getSystemService(UI_MODE_SERVICE) as UiModeManager
+        return uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
+    }
     private fun showLauncherSelection() {
         Log.d("showLauncherSelection", "called")
         val settingsIntent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (settingsIntent.resolveActivity(packageManager) != null) {
+                Log.d("showLauncherSelection", "${isAndroidTV()}")
+                if (isAndroidTV()) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        val roleManager = this.getSystemService(Context.ROLE_SERVICE)
+                                as RoleManager
+                        val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME)
+                        startActivityForResult(intent,0)
+                        return
+                    }
+                    settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
                 try {
                     Log.d("intent", settingsIntent.toString())
                     startActivity(settingsIntent)
@@ -398,7 +425,34 @@ class MainActivity : AppCompatActivity() {
         } else {
             // Handle the case when the device's Android version is below O
         }
+
+//        val settingsIntent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+//        if (settingsIntent.resolveActivity(packageManager) != null) {
+//            Log.d("showLauncherSelection", "null")
+//            startActivity(settingsIntent)
+//        } else {
+//            Log.d("showLauncherSelection", "null")
+//            // Handle the case when the settings activity is not available
+//            // or the device does not support managing default apps
+//        }
+//        startActivityForResult(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS), 0);
+//        this.startactivity
+//        if (requestCode !== -1) act.startActivityForResult(
+//            intent,
+//            requestCode
+//        ) else act.startActivity(intent)
+//        val roleManager = this.getSystemService(Context.ROLE_SERVICE)
+//                as RoleManager
+//        if (roleManager.isRoleAvailable(RoleManager.ROLE_HOME) &&
+//            !roleManager.isRoleHeld(RoleManager.ROLE_HOME)
+//        ) {
+//            Log.d("showLauncherSelection", "not set as default")
+////            SetDefaultLauncher(this).launchHomeOrClearDefaultsDialog()
+//            val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME)
+//            startActivityForResult(intent,0)
+//        }
     }
+
 
     fun getPackageList(){
         viewModel.getPackageApp()
