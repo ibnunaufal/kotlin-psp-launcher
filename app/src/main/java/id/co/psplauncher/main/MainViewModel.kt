@@ -1,5 +1,6 @@
 package id.co.psplauncher.main
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -17,7 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val userPreferences: UserPreferences
+    private var userPreferences: UserPreferences
 ) : ViewModel() {
 
     private var _loginResponse: MutableLiveData<Resource<LoginResponse>> = MutableLiveData()
@@ -40,5 +41,15 @@ class MainViewModel @Inject constructor(
     fun getPackageApp() = viewModelScope.launch {
         _packageAppResponse.value = Resource.Loading
         _packageAppResponse.value = authRepository.getPackageApp()
+    }
+
+    fun getActivePackageList() = viewModelScope.launch{
+        userPreferences.getActivePackageList()
+        Log.i("getViewModel", "called")
+    }
+
+    fun savePackageList(data: String) = viewModelScope.launch {
+        userPreferences.saveActivePackageList(data)
+        Log.i("Save to UserPreferences", "called")
     }
 }

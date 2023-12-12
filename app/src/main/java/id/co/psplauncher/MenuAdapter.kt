@@ -15,6 +15,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.RecyclerView
+import id.co.psplauncher.main.MainActivity
 
 class MenuAdapter(val listMenu: ArrayList<Menu>, ctx: Context): RecyclerView.Adapter<MenuAdapter.ListViewHolder>() {
     private var context: Context = ctx
@@ -36,7 +37,9 @@ class MenuAdapter(val listMenu: ArrayList<Menu>, ctx: Context): RecyclerView.Ada
         holder.icon.setImageDrawable(menu.icon)
 
         holder.itemView.setOnLongClickListener {
-            openAppDetail(menu.label)
+            var context: Context = holder.itemView.context
+            context as MainActivity
+            context.openAppDetail(menu.label)
             true
         }
         holder.itemView.setOnClickListener {
