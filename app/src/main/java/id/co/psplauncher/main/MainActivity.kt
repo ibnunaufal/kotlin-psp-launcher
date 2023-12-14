@@ -80,7 +80,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        showAll()
+        showAllOffline()
+        getScreenSize()
 
         binding.btnTest.setOnClickListener {
 //            onAlertDialog(mainLayout)
@@ -88,18 +89,6 @@ class MainActivity : AppCompatActivity() {
 //            requestStoragePermission()
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName")))
         }
-
-//        binding.btnTest.setOnFocusChangeListener { _, b ->
-//            if (b){
-//                binding.btnTest.background = resources.getDrawable(R.drawable.btn_active)
-////                btn_test.setTextColor(resources.getColor(R.color.white))
-//            } else {
-//                binding.btnTest.background = resources.getDrawable(R.drawable.btn_outline)
-////                btn_test.setTextColor(resources.getColor(R.color.black))
-//            }
-//        }
-
-        getScreenSize()
 
         viewModel.updateResponse.observe(this){
             if (it is Resource.Success){
@@ -124,9 +113,7 @@ class MainActivity : AppCompatActivity() {
                     activePackageList.add(item.name)
                 }
                 viewModel.savePackageList(activePackageList.toString())
-                val offlineData = viewModel.getActivePackageList()
-                Log.i("UserPreferences Data", offlineData)
-                showAll()
+                showAllOnline()
             }
         }
         viewModel.getPackageApp()
@@ -274,8 +261,6 @@ class MainActivity : AppCompatActivity() {
 //            checkStoragePermission()
 
         }
-
-
         val dialog = builder.create()
         dialog.show()
     }
@@ -286,15 +271,54 @@ class MainActivity : AppCompatActivity() {
         Log.i("checkupdate", this.packageName)
     }
 
-    fun showAll(){
-        apps = ArrayList()
-
+    fun showAllOffline(){
         val i = Intent(Intent.ACTION_MAIN, null)
         i.addCategory(Intent.CATEGORY_LAUNCHER)
 
         val offlineData = viewModel.getActivePackageList()
         val offlineList = offlineData.replace("[", "").replace("]", "").replace(" ", "").split(",")
         Log.i("offlineList" , offlineList.toString())
+
+        val manager = packageManager
+        val availableActivities = manager?.queryIntentActivities(i, 0)
+        Log.d("all", availableActivities.toString())
+
+        if (offlineData.isNotEmpty()) {
+            Log.i("offline", "isNotEmpty")
+            binding.rvMenus.layoutManager = LinearLayoutManager(this)
+            val menuAdapter = MenuAdapter(list, this)
+            binding.rvMenus.apply {
+                layoutManager = GridLayoutManager(this@MainActivity, 2)
+                adapter = menuAdapter
+            }
+            binding.rvMenus.setHasFixedSize(true)
+
+            list.clear()
+            if (availableActivities != null) {
+                for (x in availableActivities){
+                    if(x.activityInfo.packageName.contains("vending")){
+                        list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
+                    }
+                    for(item in offlineList){
+                        if(x.activityInfo.packageName.contains(item)){
+                            Log.i("package name", item)
+                            list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
+                        }
+                    }
+
+                    menuAdapter.notifyDataSetChanged()
+                }
+            }
+            Log.d("asdasd", list.toString())
+            binding.rvMenus.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+            activePackageList.clear()
+        } else {
+            Log.i("offline", "isEmpty")
+        }
+    }
+    fun showAllOnline(){
+        val i = Intent(Intent.ACTION_MAIN, null)
+        i.addCategory(Intent.CATEGORY_LAUNCHER)
 
         val manager = packageManager
         val availableActivities = manager?.queryIntentActivities(i, 0)
@@ -311,15 +335,10 @@ class MainActivity : AppCompatActivity() {
 
             list.clear()
             for (x in availableActivities){
-                if(x.activityInfo.packageName.contains("solusinegeri") &&
-                    ! x.activityInfo.packageName.contains("psplauncher")){
-                    Log.d("zxc", x.activityInfo.packageName)
-                    list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
-                }
                 if(x.activityInfo.packageName.contains("vending")){
                     list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
                 }
-                for(item in offlineList){
+                for(item in activePackageList){
                     if(x.activityInfo.packageName.contains(item)){
                         Log.i("package name", item)
                         list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
@@ -328,9 +347,11 @@ class MainActivity : AppCompatActivity() {
                 menuAdapter.notifyDataSetChanged()
             }
             Log.d("asdasd", list.toString())
+            val offlineData = viewModel.getActivePackageList()
+            Log.i("UserPreferences Data", offlineData)
             binding.rvMenus.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
             activePackageList.clear()
-        }
+        } else { }
     }
 
     fun getScreenSize(){
@@ -411,7 +432,7 @@ class MainActivity : AppCompatActivity() {
                         val roleManager = this.getSystemService(Context.ROLE_SERVICE)
                                 as RoleManager
                         val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME)
-                        startActivityForResult(intent,0)
+                        startActivityForResult(intent, 0)
                         return
                     }
                     settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -419,7 +440,7 @@ class MainActivity : AppCompatActivity() {
                 try {
                     Log.d("intent", settingsIntent.toString())
                     startActivity(settingsIntent)
-                } catch (e: IntentSender.SendIntentException){
+                } catch (e: IntentSender.SendIntentException) {
                     Log.e("error", e.toString())
                 }
             } else {
@@ -429,34 +450,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             // Handle the case when the device's Android version is below O
         }
-
-//        val settingsIntent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
-//        if (settingsIntent.resolveActivity(packageManager) != null) {
-//            Log.d("showLauncherSelection", "null")
-//            startActivity(settingsIntent)
-//        } else {
-//            Log.d("showLauncherSelection", "null")
-//            // Handle the case when the settings activity is not available
-//            // or the device does not support managing default apps
-//        }
-//        startActivityForResult(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS), 0);
-//        this.startactivity
-//        if (requestCode !== -1) act.startActivityForResult(
-//            intent,
-//            requestCode
-//        ) else act.startActivity(intent)
-//        val roleManager = this.getSystemService(Context.ROLE_SERVICE)
-//                as RoleManager
-//        if (roleManager.isRoleAvailable(RoleManager.ROLE_HOME) &&
-//            !roleManager.isRoleHeld(RoleManager.ROLE_HOME)
-//        ) {
-//            Log.d("showLauncherSelection", "not set as default")
-////            SetDefaultLauncher(this).launchHomeOrClearDefaultsDialog()
-//            val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME)
-//            startActivityForResult(intent,0)
-//        }
     }
-
 
     fun getPackageList(){
         viewModel.getPackageApp()
@@ -520,6 +514,6 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(Intent.ACTION_DELETE)
         intent.data = Uri.parse("package:$packageName")
         startActivity(intent)
-        showAll()
+        showAllOffline()
     }
 }

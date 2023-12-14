@@ -31,6 +31,15 @@
     </application>
     <queries>
         <package android:name="id.co.pspinfo" />
+        <package android:name="id.co.pspmerchant" />
+        <package android:name="id.co.pspmobile" />
+        <package android:name="id.co.absensi" />
+        <package android:name="id.co.katalisinfo" />
+        <package android:name="id.co.katalisinfostb" />
+        <package android:name="id.co.solusinegeri.absensi" />
+        <package android:name="id.co.solusinegeri.katalisinfo" />
+        <package android:name="id.co.solusinegeri.katalisinfostb" />
+        <package android:name="id.co.solusinegeri.katalisedc" />
     </queries>
 
 </manifest>
