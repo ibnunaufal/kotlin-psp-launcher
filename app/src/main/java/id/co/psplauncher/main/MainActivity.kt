@@ -32,6 +32,7 @@ import id.co.psplauncher.R
 import id.co.psplauncher.data.local.UserPreferences
 import id.co.psplauncher.data.network.Resource
 import id.co.psplauncher.data.network.auth.AuthApi
+import id.co.psplauncher.data.network.response.PackageListResponse
 import id.co.psplauncher.databinding.ActivityMainBinding
 import kotlinx.coroutines.Job
 import retrofit2.Call
@@ -49,7 +50,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
-    protected lateinit var userPreferences: UserPreferences
 
     private var isStartOpenDefaultApp: Boolean = false
     private val appName: String = "id.co.solusinegeri.katalisinfostb"
@@ -69,12 +69,16 @@ class MainActivity : AppCompatActivity() {
     var wifiJob: Job? = null
     private var activePackageList = mutableListOf<String>()
 
+    /*
+    1. check localstorage, ada ngga data package list nya
+    2. kalo ada pake yg di localstorage, kalo ngga biarin kosong, sekalian hit api
+    3. hasil response api nya, set ke adapter RV dan save ke localstorage
+    * */
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        userPreferences = UserPreferences(this)
 
         showAll()
 
@@ -120,7 +124,7 @@ class MainActivity : AppCompatActivity() {
                     activePackageList.add(item.name)
                 }
                 viewModel.savePackageList(activePackageList.toString())
-                val offlineData = userPreferences.getActivePackageList()
+                val offlineData = viewModel.getActivePackageList()
                 Log.i("UserPreferences Data", offlineData)
                 showAll()
             }
@@ -288,7 +292,7 @@ class MainActivity : AppCompatActivity() {
         val i = Intent(Intent.ACTION_MAIN, null)
         i.addCategory(Intent.CATEGORY_LAUNCHER)
 
-        val offlineData = userPreferences.getActivePackageList()
+        val offlineData = viewModel.getActivePackageList()
         val offlineList = offlineData.replace("[", "").replace("]", "").replace(" ", "").split(",")
         Log.i("offlineList" , offlineList.toString())
 
@@ -464,9 +468,9 @@ class MainActivity : AppCompatActivity() {
         return uiMode and Configuration.UI_MODE_TYPE_MASK == Configuration.UI_MODE_TYPE_TELEVISION
     }
 
-    fun openAppDetail(app: String){
+    fun openAppDetail(app: String, name: String){
         val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-        builder.setTitle("Opsi")
+        builder.setTitle("Opsi $name")
 
         builder.setNegativeButton("Batal"){
                 _, _ ->

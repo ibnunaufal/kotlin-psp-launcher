@@ -43,10 +43,7 @@ class MainViewModel @Inject constructor(
         _packageAppResponse.value = authRepository.getPackageApp()
     }
 
-    fun getActivePackageList() = viewModelScope.launch{
-        userPreferences.getActivePackageList()
-        Log.i("getViewModel", "called")
-    }
+    fun getActivePackageList() = userPreferences.getActivePackageList()
 
     fun savePackageList(data: String) = viewModelScope.launch {
         userPreferences.saveActivePackageList(data)

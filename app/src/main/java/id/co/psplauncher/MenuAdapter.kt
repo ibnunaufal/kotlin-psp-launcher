@@ -39,7 +39,7 @@ class MenuAdapter(val listMenu: ArrayList<Menu>, ctx: Context): RecyclerView.Ada
         holder.itemView.setOnLongClickListener {
             var context: Context = holder.itemView.context
             context as MainActivity
-            context.openAppDetail(menu.label)
+            context.openAppDetail(menu.label, menu.name)
             true
         }
         holder.itemView.setOnClickListener {
