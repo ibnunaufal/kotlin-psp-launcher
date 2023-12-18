@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace 'id.co.psplauncher'
+    namespace 'id.co.tkilauncher'
     compileSdk 34
 
     defaultConfig {
-        applicationId "id.co.psplauncher"
+        applicationId "id.co.tkilauncher"
         minSdk 24
         targetSdk 34
         versionCode 1

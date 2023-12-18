@@ -1,0 +1,29 @@
+package id.co.tkilauncher.data.network.auth
+
+import id.co.tkilauncher.data.network.model.ModelLogin
+import id.co.tkilauncher.data.network.response.LoginResponse
+import id.co.tkilauncher.data.network.response.PackageListResponse
+import id.co.tkilauncher.data.network.response.UpdateResponse
+import retrofit2.Response
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.Headers
+import retrofit2.http.POST
+import retrofit2.http.Path
+
+interface AuthApi {
+
+    @Headers("Content-Type: application/json")
+    @POST("katalis/login")
+    suspend fun login(
+        @Body info: ModelLogin
+    ): Response<LoginResponse>
+
+    @GET("main_a/info/google-play/{id}")
+    suspend fun checkUpdate(
+        @Path("id") id: String
+    ): Response<UpdateResponse>
+
+    @GET("main_a/general/package_app")
+    suspend fun getPackageApp(): Response<PackageListResponse>
+}
