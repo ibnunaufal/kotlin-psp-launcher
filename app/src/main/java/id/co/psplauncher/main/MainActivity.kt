@@ -499,7 +499,8 @@ class MainActivity : AppCompatActivity() {
                 name = it.name
             }
         }
-        builder.setTitle("Anda yakin akan melakukan menghapus $name?")
+        builder.setTitle("Konfirmasi")
+        builder.setMessage("Anda yakin akan melakukan menghapus $name?\n($packageName)")
         builder.setPositiveButton("Ya"){
                 _,_ -> doRemove(packageName)
         }
