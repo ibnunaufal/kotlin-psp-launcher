@@ -50,7 +50,7 @@ class MenuAdapter(val listMenu: ArrayList<Menu>, ctx: Context): RecyclerView.Ada
         holder.itemView.isFocusable = true
         holder.itemView.setOnFocusChangeListener { v, hasFocus ->
             if(hasFocus){
-//                holder.entire.background = holder.itemView.context.getDrawable(R.drawable.active_new)
+                holder.entire.background = holder.itemView.context.getDrawable(R.drawable.active_new)
 
             }else{
                 holder.entire.setBackgroundColor(Color.parseColor("#00FFFFFF"))

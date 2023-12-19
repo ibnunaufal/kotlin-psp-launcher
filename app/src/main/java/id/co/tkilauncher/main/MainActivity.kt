@@ -1,5 +1,6 @@
 package id.co.tkilauncher.main
 
+import android.app.ActionBar.LayoutParams
 import android.app.AlertDialog
 import android.app.UiModeManager
 import android.app.role.RoleManager
@@ -9,6 +10,9 @@ import android.content.IntentSender
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.Color
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -23,12 +27,18 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
+import id.co.tkilauncher.BuildConfig
 import id.co.tkilauncher.Item
 import id.co.tkilauncher.Menu
 import id.co.tkilauncher.MenuAdapter
+import id.co.tkilauncher.R
 import id.co.tkilauncher.data.network.Resource
 import id.co.tkilauncher.databinding.ActivityMainBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -71,11 +81,24 @@ class MainActivity : AppCompatActivity() {
         showAllOffline()
         getScreenSize()
 
+        binding.txtVersion.text = "v${BuildConfig.VERSION_NAME}"
+        binding.txtVersionBottom.text = "v${BuildConfig.VERSION_NAME}"
+
         binding.btnTest.setOnClickListener {
 //            onAlertDialog(mainLayout)
             inputtedApkUrl = apkUrl
 //            requestStoragePermission()
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName")))
+        }
+
+        binding.btnTest.setOnFocusChangeListener { _, b ->
+            if (b){
+                binding.btnTest.background = resources.getDrawable(R.drawable.btn_active)
+//                btn_test.setTextColor(resources.getColor(R.color.white))
+            } else {
+                binding.btnTest.background = resources.getDrawable(R.drawable.btn_outline)
+//                btn_test.setTextColor(resources.getColor(R.color.black))
+            }
         }
 
         viewModel.updateResponse.observe(this){
@@ -113,6 +136,16 @@ class MainActivity : AppCompatActivity() {
                 startDefaultApp()
             }
         }
+        val orientation = resources.configuration.orientation
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            Log.d("Landscape", "called")
+            binding.layoutWifi.visibility = View.VISIBLE
+            binding.layoutTxtVerTop.visibility = View.VISIBLE
+            binding.mainLayout.background = this.getDrawable(R.drawable.main_bg_landscape)
+        } else {
+            binding.rvMenus.layoutParams.height = 1300
+            binding.txtVersionBottom.visibility = View.VISIBLE
+        }
     }
 
     fun setPref(bool: String){
@@ -124,20 +157,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startDefaultApp(){
-        val launchIntent = packageManager.getLaunchIntentForPackage("id.co.solusinegeri.katalisinfostb")
+        val launchIntentAbsenLama = packageManager.getLaunchIntentForPackage("id.co.solusinegeri.katalisinfostb")
+        val launchIntentAbsenBaru = packageManager.getLaunchIntentForPackage("id.co.absensi")
 
 //        val intent = Intent(this, packageManager.getLaunchIntentForPackage("id.co.solusinegeri.katalisinfostb"));
 //        startActivity(intent)
 
-        if (launchIntent != null) {
+        if (launchIntentAbsenLama != null) {
             Handler().postDelayed({
-//                if(isStartOpenDefaultApp){
-                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(launchIntent)
-//                    isStartOpenDefaultApp = false
-//                }
+                launchIntentAbsenLama.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(launchIntentAbsenLama)
             }, 2000)
-        }
+        } else if(launchIntentAbsenBaru != null) {
+            Handler().postDelayed({
+                launchIntentAbsenBaru.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(launchIntentAbsenBaru)
+            }, 2000)
+        } else {}
     }
 
     override fun onKeyLongPress(keyCode: Int, event: KeyEvent?): Boolean {
@@ -275,10 +311,6 @@ class MainActivity : AppCompatActivity() {
             Log.i("offline", "isNotEmpty")
             binding.rvMenus.layoutManager = LinearLayoutManager(this)
             val menuAdapter = MenuAdapter(list, this)
-            binding.rvMenus.apply {
-                layoutManager = GridLayoutManager(this@MainActivity, 2)
-                adapter = menuAdapter
-            }
             binding.rvMenus.setHasFixedSize(true)
 
             list.clear()
@@ -288,8 +320,8 @@ class MainActivity : AppCompatActivity() {
                         list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
                     }
                     for(item in offlineList){
-                        if(x.activityInfo.packageName.contains(item)){
-                            Log.i("package name", item)
+                        if(x.activityInfo.packageName == item){
+                            Log.i("package name offline", item)
                             list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
                         }
                     }
@@ -297,7 +329,24 @@ class MainActivity : AppCompatActivity() {
                     menuAdapter.notifyDataSetChanged()
                 }
             }
-            Log.d("asdasd", list.toString())
+            Log.d("list offline", list.toString())
+            val orientation = resources.configuration.orientation
+            if(list.size == 2){
+                binding.rvMenus.apply {
+                    layoutManager = GridLayoutManager(this@MainActivity, 2)
+                    adapter = menuAdapter
+                }
+            } else if (list.size > 2 && orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                binding.rvMenus.apply {
+                    layoutManager = GridLayoutManager(this@MainActivity, 3)
+                    adapter = menuAdapter
+                }
+            } else {
+                binding.rvMenus.apply {
+                    layoutManager = GridLayoutManager(this@MainActivity, 2)
+                    adapter = menuAdapter
+                }
+            }
             binding.rvMenus.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
             activePackageList.clear()
         } else {
@@ -315,10 +364,6 @@ class MainActivity : AppCompatActivity() {
         if (availableActivities != null) {
             binding.rvMenus.layoutManager = LinearLayoutManager(this)
             val menuAdapter = MenuAdapter(list, this)
-            binding.rvMenus.apply {
-                layoutManager = GridLayoutManager(this@MainActivity, 2)
-                adapter = menuAdapter
-            }
             binding.rvMenus.setHasFixedSize(true)
 
             list.clear()
@@ -327,14 +372,31 @@ class MainActivity : AppCompatActivity() {
                     list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
                 }
                 for(item in activePackageList){
-                    if(x.activityInfo.packageName.contains(item)){
-                        Log.i("package name", item)
+                    if(x.activityInfo.packageName == item){
+                        Log.i("package name online", item)
                         list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
                     }
                 }
                 menuAdapter.notifyDataSetChanged()
             }
-            Log.d("asdasd", list.toString())
+            val orientation = resources.configuration.orientation
+            Log.d("list online", list.toString())
+            if(list.size == 2){
+                binding.rvMenus.apply {
+                    layoutManager = GridLayoutManager(this@MainActivity, 2)
+                    adapter = menuAdapter
+                }
+            } else if (list.size > 2 && orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                binding.rvMenus.apply {
+                    layoutManager = GridLayoutManager(this@MainActivity, 3)
+                    adapter = menuAdapter
+                }
+            } else {
+                binding.rvMenus.apply {
+                    layoutManager = GridLayoutManager(this@MainActivity, 2)
+                    adapter = menuAdapter
+                }
+            }
             val offlineData = viewModel.getActivePackageList()
             Log.i("UserPreferences Data", offlineData)
             binding.rvMenus.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
@@ -351,10 +413,10 @@ class MainActivity : AppCompatActivity() {
         val smallSize = 16
 
         if(width > 1000){
-//            wifi.textSize = bigSize.toFloat()
+            binding.wifi.textSize = bigSize.toFloat()
             binding.txtclock.textSize = bigSize.toFloat()
         }else{
-//            binding.wifi.textSize = smallSize.toFloat()
+            binding.wifi.textSize = smallSize.toFloat()
             binding.txtclock.textSize = smallSize.toFloat()
         }
 //        var adapter = ArrayAdapter<Item>
@@ -367,6 +429,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         checkUpdate()
         getPackageList()
+        startWifiCoroutine()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -504,5 +567,59 @@ class MainActivity : AppCompatActivity() {
         intent.data = Uri.parse("package:$packageName")
         startActivity(intent)
         showAllOffline()
+    }
+    val coroutineScope = CoroutineScope(Dispatchers.Main)
+    fun startWifiCoroutine() {
+        // Ensure that there's no existing coroutine running
+        stopWifiCoroutine()
+        // Start the new coroutine
+        wifiJob = coroutineScope.launch {
+            updateWifiText()
+        }
+    }
+    fun stopWifiCoroutine() {
+        // Cancel the job if it's not null
+        wifiJob?.cancel()
+        wifiJob = null
+    }
+    suspend fun updateWifiText() {
+        while (true) {
+            // Update the wifi.text value
+            if (isNetworkAvailable(this@MainActivity)){
+                binding.wifi.text = "Terhubung"
+                binding.wifi.setTextColor(Color.parseColor("#00ff00"))
+            }else{
+                binding.wifi.text = "Tidak Ada Jaringan"
+                binding.wifi.setTextColor(Color.parseColor("#ff0000"))
+            }
+            // Delay for 5 seconds
+            delay(3000)
+        }
+    }
+    private fun isNetworkAvailable(context: Context?): Boolean {
+        if (context == null) return false
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+            if (capabilities != null) {
+                when {
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
+                        return true
+                    }
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
+                        return true
+                    }
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
+                        return true
+                    }
+                }
+            }
+        } else {
+            val activeNetworkInfo = connectivityManager.activeNetworkInfo
+            if (activeNetworkInfo != null && activeNetworkInfo.isConnected) {
+                return true
+            }
+        }
+        return false
     }
 }
