@@ -143,7 +143,8 @@ class MainActivity : AppCompatActivity() {
             binding.layoutTxtVerTop.visibility = View.VISIBLE
             binding.mainLayout.background = this.getDrawable(R.drawable.main_bg_landscape)
         } else {
-            binding.rvMenus.layoutParams.height = 1300
+            val height: Int = this.resources.displayMetrics.heightPixels
+            binding.rvMenus.layoutParams.height = (height / 1.6).toInt()
             binding.txtVersionBottom.visibility = View.VISIBLE
         }
     }
@@ -319,6 +320,9 @@ class MainActivity : AppCompatActivity() {
                     if(x.activityInfo.packageName.contains("vending")){
                         list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
                     }
+                    if(x.activityInfo.packageName.contains("documentsui")){
+                        list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
+                    }
                     for(item in offlineList){
                         if(x.activityInfo.packageName == item){
                             Log.i("package name offline", item)
@@ -369,6 +373,9 @@ class MainActivity : AppCompatActivity() {
             list.clear()
             for (x in availableActivities){
                 if(x.activityInfo.packageName.contains("vending")){
+                    list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
+                }
+                if(x.activityInfo.packageName.contains("documentsui")){
                     list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
                 }
                 for(item in activePackageList){
