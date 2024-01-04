@@ -320,9 +320,6 @@ class MainActivity : AppCompatActivity() {
                     if(x.activityInfo.packageName.contains("vending")){
                         list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
                     }
-                    if(x.activityInfo.packageName.contains("documentsui")){
-                        list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
-                    }
                     for(item in offlineList){
                         if(x.activityInfo.packageName == item){
                             Log.i("package name offline", item)
@@ -373,9 +370,6 @@ class MainActivity : AppCompatActivity() {
             list.clear()
             for (x in availableActivities){
                 if(x.activityInfo.packageName.contains("vending")){
-                    list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
-                }
-                if(x.activityInfo.packageName.contains("documentsui")){
                     list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
                 }
                 for(item in activePackageList){
