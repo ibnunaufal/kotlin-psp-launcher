@@ -41,6 +41,7 @@
         <package android:name="id.co.solusinegeri.katalisinfo" />
         <package android:name="id.co.solusinegeri.katalisinfostb" />
         <package android:name="id.co.solusinegeri.katalisedc" />
+        <package android:name="com.idzhami.appbase" />
     </queries>
 
 </manifest>

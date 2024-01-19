@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity() {
 
         showAllOffline()
         getScreenSize()
-
+ 
         binding.txtVersion.text = "v${BuildConfig.VERSION_NAME}"
         binding.txtVersionBottom.text = "v${BuildConfig.VERSION_NAME}"
 
@@ -158,23 +158,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startDefaultApp(){
-        val launchIntentAbsenLama = packageManager.getLaunchIntentForPackage("id.co.solusinegeri.katalisinfostb")
-        val launchIntentAbsenBaru = packageManager.getLaunchIntentForPackage("id.co.absensi")
-
-//        val intent = Intent(this, packageManager.getLaunchIntentForPackage("id.co.solusinegeri.katalisinfostb"));
-//        startActivity(intent)
-
-        if (launchIntentAbsenLama != null) {
+        val launchIntentIdzhami = packageManager.getLaunchIntentForPackage("com.idzhami.appbase")
+        if (launchIntentIdzhami != null) {
             Handler().postDelayed({
-                launchIntentAbsenLama.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(launchIntentAbsenLama)
+                launchIntentIdzhami.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(launchIntentIdzhami)
             }, 2000)
-        } else if(launchIntentAbsenBaru != null) {
-            Handler().postDelayed({
-                launchIntentAbsenBaru.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(launchIntentAbsenBaru)
-            }, 2000)
-        } else {}
+        }
+//        val launchIntentAbsenLama = packageManager.getLaunchIntentForPackage("id.co.solusinegeri.katalisinfostb")
+//        val launchIntentAbsenBaru = packageManager.getLaunchIntentForPackage("id.co.absensi")
+//
+////        val intent = Intent(this, packageManager.getLaunchIntentForPackage("id.co.solusinegeri.katalisinfostb"));
+////        startActivity(intent)
+//
+//        if (launchIntentAbsenLama != null) {
+//            Handler().postDelayed({
+//                launchIntentAbsenLama.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+//                startActivity(launchIntentAbsenLama)
+//            }, 2000)
+//        } else if(launchIntentAbsenBaru != null) {
+//            Handler().postDelayed({
+//                launchIntentAbsenBaru.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+//                startActivity(launchIntentAbsenBaru)
+//            }, 2000)
+//        } else {}
     }
 
     override fun onKeyLongPress(keyCode: Int, event: KeyEvent?): Boolean {
