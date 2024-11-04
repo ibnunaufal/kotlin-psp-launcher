@@ -127,6 +127,9 @@ class MainActivity : AppCompatActivity() {
                 viewModel.savePackageList(activePackageList.toString())
                 showAllOnline()
             }
+            if (it is Resource.Failure){
+                showAllOffline()
+            }
         }
         viewModel.getPackageApp()
 
@@ -423,6 +426,42 @@ class MainActivity : AppCompatActivity() {
             activePackageList.clear()
         } else {
             Log.i("offline", "isEmpty")
+            binding.rvMenus.layoutManager = LinearLayoutManager(this)
+            val menuAdapter = MenuAdapter(list, this)
+            binding.rvMenus.setHasFixedSize(true)
+
+            list.clear()
+            if (availableActivities != null) {
+                for (x in availableActivities){
+                    if(x.activityInfo.packageName.contains("vending")){
+                        list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
+                    }
+                    if (x.activityInfo.packageName.contains("solusinegeri")){
+                        list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
+                    }
+                    menuAdapter.notifyDataSetChanged()
+                }
+            }
+            Log.d("list offline", list.toString())
+            val orientation = resources.configuration.orientation
+            if(list.size == 2){
+                binding.rvMenus.apply {
+                    layoutManager = GridLayoutManager(this@MainActivity, 2)
+                    adapter = menuAdapter
+                }
+            } else if (list.size > 2 && orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                binding.rvMenus.apply {
+                    layoutManager = GridLayoutManager(this@MainActivity, 3)
+                    adapter = menuAdapter
+                }
+            } else {
+                binding.rvMenus.apply {
+                    layoutManager = GridLayoutManager(this@MainActivity, 2)
+                    adapter = menuAdapter
+                }
+            }
+            binding.rvMenus.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+            activePackageList.clear()
         }
     }
     fun showAllOnline(){
