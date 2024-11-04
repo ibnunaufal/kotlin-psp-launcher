@@ -51,10 +51,25 @@ class UserPreferences @Inject constructor(@ApplicationContext context: Context){
         return runBlocking { packageList.first() }
     }
 
+    suspend fun saveDefaultApp(defaultApp: String) {
+        appContext.dataStore.edit { preferences ->
+            preferences[DEFAULT_APP] = defaultApp
+        }
+    }
+
+    val defaultApp: Flow<String>
+        get() = appContext.dataStore.data.map { preferences ->
+            preferences[DEFAULT_APP] ?: ""
+        }
+
+    fun getDefaultApp(): String {
+        return runBlocking { defaultApp.first() }
+    }
 
     companion object {
         private val ACCESS_TOKEN = stringPreferencesKey("access_token")
         private val ACTIVE_PACKAGE_LIST = stringPreferencesKey("active_package_list")
+        private val DEFAULT_APP = stringPreferencesKey("default_app")
     }
 
 }

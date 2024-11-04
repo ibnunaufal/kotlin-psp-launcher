@@ -1,6 +1,5 @@
 package id.co.tkilauncher.main
 
-import android.app.ActionBar.LayoutParams
 import android.app.AlertDialog
 import android.app.UiModeManager
 import android.app.role.RoleManager
@@ -32,6 +31,7 @@ import id.co.tkilauncher.Item
 import id.co.tkilauncher.Menu
 import id.co.tkilauncher.MenuAdapter
 import id.co.tkilauncher.R
+import id.co.tkilauncher.data.local.UserPreferences
 import id.co.tkilauncher.data.network.Resource
 import id.co.tkilauncher.databinding.ActivityMainBinding
 import kotlinx.coroutines.CoroutineScope
@@ -39,6 +39,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -52,7 +53,7 @@ class MainActivity : AppCompatActivity() {
     private var isStartOpenDefaultApp: Boolean = false
     private val appName: String = "id.co.solusinegeri.katalisinfostb"
     private var apps: ArrayList<Item>? = null
-    private val baseURL = "https://api.dev.katalis.info/"
+    private val baseURL = "https://api.katalis.info/"
 
 
     companion object {
@@ -129,6 +130,7 @@ class MainActivity : AppCompatActivity() {
         }
         viewModel.getPackageApp()
 
+        startDefaultApp()
         if(savedInstanceState == null){
             val temp = getPref()
             Log.d("start",temp.toString())
@@ -160,6 +162,22 @@ class MainActivity : AppCompatActivity() {
     private fun startDefaultApp(){
         val launchIntentAbsenLama = packageManager.getLaunchIntentForPackage("id.co.solusinegeri.katalisinfostb")
         val launchIntentAbsenBaru = packageManager.getLaunchIntentForPackage("id.co.absensi")
+        val launchIntentJemputSiswa = packageManager.getLaunchIntentForPackage("id.co.solusinegeri.jemputsiswa")
+
+        val savedDefault = runBlocking { UserPreferences(this@MainActivity).getDefaultApp() }
+        Log.d("savedDefault", savedDefault)
+        if (savedDefault.isNotEmpty()) {
+            val launchIntent = packageManager.getLaunchIntentForPackage(savedDefault)
+            Log.d("savedDefault", savedDefault)
+            if (launchIntent != null) {
+                Log.d("launchIntent", launchIntent.toString())
+                Handler().postDelayed({
+                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(launchIntent)
+                }, 2000)
+                return
+            }
+        }
 
 //        val intent = Intent(this, packageManager.getLaunchIntentForPackage("id.co.solusinegeri.katalisinfostb"));
 //        startActivity(intent)
@@ -168,11 +186,19 @@ class MainActivity : AppCompatActivity() {
             Handler().postDelayed({
                 launchIntentAbsenLama.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 startActivity(launchIntentAbsenLama)
+                return@postDelayed
             }, 2000)
         } else if(launchIntentAbsenBaru != null) {
             Handler().postDelayed({
                 launchIntentAbsenBaru.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 startActivity(launchIntentAbsenBaru)
+                return@postDelayed
+            }, 2000)
+        } else if (launchIntentJemputSiswa != null) {
+            Handler().postDelayed({
+                launchIntentJemputSiswa.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(launchIntentJemputSiswa)
+                return@postDelayed
             }, 2000)
         } else {}
     }
@@ -240,6 +266,7 @@ class MainActivity : AppCompatActivity() {
         temp.add("Atur Wifi")
         temp.add("Atur Waktu dan Tanggal")
         temp.add("Atur Tampilan (Zoom)")
+        temp.add("Atur Aplikasi Pertama yang Dibuka")
         temp.add("Buka Pengaturan Lainnya")
 
         val devices = temp.toTypedArray()
@@ -252,6 +279,8 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
             } else if(temp[which].contains("Waktu")) {
                 startActivity(Intent(Settings.ACTION_DATE_SETTINGS))
+            } else if(temp[which].contains("Pertama")) {
+                setDefaultApp()
             } else if(temp[which].contains("Tampilan")) {
                 startActivityForResult(Intent(android.provider.Settings.ACTION_DISPLAY_SETTINGS), 0);
 //                startActivity(Intent(Settings.ACTION_DISPLAY_SETTINGS))
@@ -290,6 +319,48 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
+    fun setDefaultApp() {
+        val pm = packageManager
+//get a list of installed apps.
+        val packages = pm.getInstalledApplications(PackageManager.GET_META_DATA)
+            .filter { it.packageName.contains("solusinegeri") }
+            .filter { !it.packageName.contains("psplauncher") }
+
+        Log.d("getAllPackages", "Installed packages (${packages.size})")
+
+        for (packageInfo in packages) {
+            Log.d("getAllPackages", "Installed package : ${packageInfo.packageName}" +
+                    " | Source dir: ${packageInfo.sourceDir}" +
+                    " | Launch Activity: ${pm.getLaunchIntentForPackage(packageInfo.packageName)}" +
+                    " | app name: ${pm.getApplicationLabel(packageInfo)}" )
+        }
+
+        val alertDialog = AlertDialog.Builder(this@MainActivity)
+        alertDialog.setTitle("Pilih aplikasi default")
+        val selected = runBlocking { UserPreferences(this@MainActivity).getDefaultApp() }
+        var selectedIndex = -1
+        try {
+            selectedIndex = packages.indexOfFirst { it.packageName == selected }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        alertDialog.setSingleChoiceItems(packages.map { "${pm.getApplicationLabel(it)} (${it.packageName})" }.toTypedArray(), selectedIndex) { dialog, which ->
+            // item selected logic
+
+        }
+        alertDialog.setPositiveButton("Simpan") { dialog, which ->
+            val selectedPosition = (dialog as AlertDialog).listView.checkedItemPosition
+            val packageInfo = packages[selectedPosition]
+            val launchIntent = pm.getLaunchIntentForPackage(packageInfo.packageName)
+            if (launchIntent != null) {
+                runBlocking { UserPreferences(this@MainActivity).saveDefaultApp(packageInfo.packageName) }
+//                startActivity(launchIntent)
+                setPref("true")
+            }
+        }
+        alertDialog.show()
+
+    }
 
     fun checkUpdate(){
         viewModel.checkUpdate(this.packageName)
@@ -359,25 +430,31 @@ class MainActivity : AppCompatActivity() {
         i.addCategory(Intent.CATEGORY_LAUNCHER)
 
         val manager = packageManager
-        val availableActivities = manager?.queryIntentActivities(i, 0)
-        Log.d("all", availableActivities.toString())
+//        val availableActivities = manager?.queryIntentActivities(i, 0)
+//        Log.d("all", availableActivities.toString())
+        val packages = manager.getInstalledApplications(PackageManager.GET_META_DATA)
 
-        if (availableActivities != null) {
+
+        if (packages != null) {
             binding.rvMenus.layoutManager = LinearLayoutManager(this)
             val menuAdapter = MenuAdapter(list, this)
             binding.rvMenus.setHasFixedSize(true)
 
             list.clear()
-            for (x in availableActivities){
-                if(x.activityInfo.packageName.contains("vending")){
-                    list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
+            for (x in packages){
+                if(x.packageName.contains("vending")){
+                    list.add(Menu(x.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
                 }
-                for(item in activePackageList){
-                    if(x.activityInfo.packageName == item){
-                        Log.i("package name online", item)
-                        list.add(Menu(x.activityInfo.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
-                    }
+                if(x.packageName.contains("solusinegeri")){
+                    list.add(Menu(x.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
                 }
+
+//                for(item in activePackageList){
+//                    if(x.packageName == item){
+//                        Log.i("package name online", item)
+//                        list.add(Menu(x.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
+//                    }
+//                }
                 menuAdapter.notifyDataSetChanged()
             }
             val orientation = resources.configuration.orientation

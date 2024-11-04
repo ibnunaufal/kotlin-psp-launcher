@@ -41,6 +41,10 @@
         <package android:name="id.co.solusinegeri.katalisinfo" />
         <package android:name="id.co.solusinegeri.katalisinfostb" />
         <package android:name="id.co.solusinegeri.katalisedc" />
+        <package android:name="id.co.solusinegeri.jemputsiswa" />
+        <package android:name="id.co.solusinegeri.anjunganjemputsiswa" />
+        <package android:name="id.co.solusinegeri.tkimerchant" />
+        <package android:name="id.co.solusinegeri.tkiinfo" />
     </queries>
 
 </manifest>

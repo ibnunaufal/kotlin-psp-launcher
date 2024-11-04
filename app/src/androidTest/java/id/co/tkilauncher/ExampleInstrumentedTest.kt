@@ -21,4 +21,8 @@ class ExampleInstrumentedTest {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         assertEquals("id.co.psplauncher", appContext.packageName)
     }
+
+    @Test
+    fun doLogin(){
+    }
 }
