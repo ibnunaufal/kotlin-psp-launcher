@@ -422,6 +422,7 @@ class MainActivity : AppCompatActivity() {
                     adapter = menuAdapter
                 }
             }
+            Log.i("pada akhirnya offline", menuAdapter.listMenu.toString())
             binding.rvMenus.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
             activePackageList.clear()
         } else {
@@ -460,6 +461,7 @@ class MainActivity : AppCompatActivity() {
                     adapter = menuAdapter
                 }
             }
+            Log.i("padaakhirnyaofflineelse", menuAdapter.listMenu.toString())
             binding.rvMenus.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
             activePackageList.clear()
         }
@@ -484,16 +486,17 @@ class MainActivity : AppCompatActivity() {
                 if(x.packageName.contains("vending")){
                     list.add(Menu(x.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
                 }
-                if(x.packageName.contains("solusinegeri")){
-                    list.add(Menu(x.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
-                }
-
-//                for(item in activePackageList){
-//                    if(x.packageName == item){
-//                        Log.i("package name online", item)
-//                        list.add(Menu(x.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
-//                    }
+//                if(x.packageName.contains("solusinegeri")){
+//                    list.add(Menu(x.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
 //                }
+
+                for(item in activePackageList){
+                    if(x.packageName == item){
+                        Log.i("package name online", item)
+                        list.add(Menu(x.packageName, x.loadLabel(manager).toString(), x.loadIcon(manager)))
+                    }
+                }
+                list.distinctBy { it.label }
                 menuAdapter.notifyDataSetChanged()
             }
             val orientation = resources.configuration.orientation
@@ -516,6 +519,7 @@ class MainActivity : AppCompatActivity() {
             }
             val offlineData = viewModel.getActivePackageList()
             Log.i("UserPreferences Data", offlineData)
+            Log.i("pada akhirnya online", menuAdapter.listMenu.toString())
             binding.rvMenus.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
             activePackageList.clear()
         } else { }
